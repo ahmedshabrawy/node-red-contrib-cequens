@@ -17,9 +17,9 @@
   ],
   "node-red": {
     "nodes": {
-      "nexmo": "nodes/nexmo.js",
-      "nexmo-credentials": "nodes/nexmo-credentials.js",
-      "nexmo-auth": "nodes/nexmo-auth.js"
+      "cequens": "nodes/cequens.js",
+      "cequens-credentials": "nodes/cequens-credentials.js",
+      "cequens-auth": "nodes/cequens-auth.js"
     }
   },
   "author": "Ahmed Shabrawy",
