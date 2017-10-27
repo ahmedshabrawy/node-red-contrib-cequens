@@ -15,6 +15,13 @@
     "sms",
     "api"
   ],
+  "node-red": {
+    "nodes": {
+      "nexmo": "nodes/nexmo.js",
+      "nexmo-credentials": "nodes/nexmo-credentials.js",
+      "nexmo-auth": "nodes/nexmo-auth.js"
+    }
+  },
   "author": "Ahmed Shabrawy",
   "license": "ISC",
   "bugs": {
