@@ -30,6 +30,9 @@
   },
   "homepage": "https://github.com/ahmedshabrawy/node-red-contrib-cequens#readme",
   "dependencies": {
-    "request": "^2.83.0"
+    "moment": "^2.19.1",
+    "request": "^2.83.0",
+    "request-promise": "^4.2.2",
+    "smpp": "^0.3.1"
   }
 }
