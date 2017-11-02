@@ -5,8 +5,8 @@
     </div>
 
     <div class="form-row">
-        <label for="node-input-cred"><i class="fa fa-users"></i><span> Recipient</span></label>
-        <input type="text" id="node-input-cred">
+        <label for="node-input-cred"><i class="fa fa-users"></i><span> Sender</span></label>
+        <input type="text" id="node-input-from">
     </div>
 
     <div class="form-row">
@@ -28,31 +28,36 @@
     <h2>Incoming message</h2>
     <code>
         {
+            from : "<SenderID>"
+            to: "966501234123"
             payload : "Here is my SMS"
+            type :"text" // or "unicode"
         }
     </code>
 
     <h2>Outcoming message</h2>
     <code>
-        {
-            "to":"<THE RECIPIENT NUMBER>",
-            "message-id":"<THE MESSAGE ID>",
-            "status":"0",
-            "remaining-balance":"15.52540000",
-            "message-price":"0.05940000",
-            "network":"20810"
+        {   requestStatus:
+                    {   RequestID: <Request ID>,
+                        ClientMessageID: '0',
+                        ResponseText: 'Request handled successfully' 
+                    },
+            invalidRecipients: '',
+            notSentTryAgain: '',
+            errors: [] 
         }
     </code>
 </script>
 
 <script type="text/javascript">
     RED.nodes.registerType('cequens', {
-        category: 'function',
+        category: 'Cequens',
         defaults: {
             name: { value: "" },
             topic: { value: "" },
             auth: { type: "cequens-auth", required: true },
-            cred: { type: "cequens-credentials", required: true }
+            //cred: { type: "cequens-credentials", required: false }
+            from: { value: "", required: false },
         },
         color: "#3FADB5",
         inputs: 1,               // set the number of inputs - only 0 or 1

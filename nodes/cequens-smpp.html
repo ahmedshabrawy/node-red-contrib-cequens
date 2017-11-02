@@ -1,0 +1,92 @@
+<!--
+  Copyright 2017 Cequens Telecom
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+
+ 
+-->
+
+<script type="text/x-red" data-template-name="smpp out">
+      
+    <div class="form-row">
+      <label for="node-input-host"><i class="fa fa-bookmark"></i> Host</label>
+      <input type="text" id="node-input-host" placeholder="localhost" style="width: 40%;" />
+      <label for="node-input-port" style="margin-left: 10px; width: 35px; "> Port</label>
+      <input type="text" id="node-input-port" placeholder="2775" style="width:45px">
+    </div>
+    
+    <div class="form-row">
+        <label for="node-input-username"><i class="fa fa-user"></i> Username</label>
+        <input type="text" id="node-input-username" placeholder="Username">
+    </div>
+
+    <div class="form-row">
+        <label for="node-input-password"><i class="fa fa-lock"></i> Password</label>
+        <input type="password" id="node-input-password" placeholder="Password">
+    </div>
+
+    <div class="form-row">
+        <label for="node-input-source_addr"><i class="fa fa-envelope"></i> Source Address</label>
+        <input type="text" id="node-input-source_addr" placeholder="Defualt Source Address">
+    </div>
+
+    <div class="form-row">
+        <label for="node-input-data_coding"><i class="fa fa-file"></i> Data Coding</label>
+        <input type="text" id="node-input-data_coding" placeholder="Default Data Coding">
+    </div>
+
+    <div class="form-row">
+        <label for="node-input-registered_delivery"><i class="fa fa-file"></i>Default Registered Delivery</label>
+        <input type="text" id="node-input-registered_delivery" placeholder="Default Registered Delivery">
+    </div>
+    <br />
+    
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+</script>
+
+<script type="text/x-red" data-help-name="smpp out">
+  <p>Cequens SMPP Node</p>
+
+</script>
+
+<script type="text/javascript">
+    RED.nodes.registerType('smpp out',{
+        category: 'Cequens',
+        color: '#c7e9c0',
+        defaults: {             
+            name: {value:''},
+            host: { value: 'smpp.cequens.com', required:true },
+            port: { value: '2010' , required:true },
+            source_addr: {value:''},
+            data_coding: {value:'3'},
+            registered_delivery: {value:'1'}
+        },
+        credentials: {
+            username: {type:"text",required: true},
+            password: {type:"password",required: true}
+        },
+        inputs:1,
+        outputs:4,
+        icon: "white-globe.png",
+        align: "right",
+        label: function() {     
+            return this.name||"smpp";
+        },
+        labelStyle: function() {
+            return this.name?"node_label_italic":"";
+        }
+    });
+</script>

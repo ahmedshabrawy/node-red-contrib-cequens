@@ -7,28 +7,32 @@ module.exports = function (RED) {
         RED.nodes.createNode(this, n);
 
         this.topic = n.topic;
-        this.cred = RED.nodes.getNode(n.cred);
+        //this.cred = RED.nodes.getNode(n.cred);
         this.auth = this.auth = RED.nodes.getNode(n.auth)
+        this.from = n.from;
 
         let node = this;
 
         this.on('input', function (msg) {
+            
+            console.log("from:"+this.from);
             request({
                 method: 'GET',
                 uri: 'http://ht.cequens.com/send.aspx',
-                header: {"Content-Type":"application/x-www-form-urlencoded"},
-                body: {
+                
+                qs: {
                     'UserName': this.auth.credentials.http_username,
                     'Password': this.auth.credentials.http_password,
-                    'Recipients': this.cred.number,
-                    'SenderName': this.cred.from,
+                    'Recipients': msg.to,
+                    'SenderName': msg.from || this.from,
                     'MessageText': msg.payload,
-                    'MessageType': "text",
-                    'dlrurl': "http://34.193.214.175:1880/dlr?nodeid="+msg._msgid
+                    'MessageType': "text" || msg.type,
+                   
                 },
-                json: false // Automatically stringifies the body to JSON 
+                json: true // Automatically stringifies the body to JSON 
             }).then(function (parsedBody) {
-                node.send({ topic: node.topic, payload: parsedBody.messages[0] });
+                console.log(parsedBody);
+                node.send({ topic: node.topic, payload: parsedBody });
             }).catch(function (err) {
                 node.error(err);
             })

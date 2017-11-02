@@ -19,7 +19,8 @@
     "nodes": {
       "cequens": "nodes/cequens.js",
       "cequens-credentials": "nodes/cequens-credentials.js",
-      "cequens-auth": "nodes/cequens-auth.js"
+      "cequens-auth": "nodes/cequens-auth.js",
+      "cequensSMPP": "nodes/cequens-smpp.js"
     }
   },
   "author": "Ahmed Shabrawy",
@@ -27,5 +28,8 @@
   "bugs": {
     "url": "https://github.com/ahmedshabrawy/node-red-contrib-cequens/issues"
   },
-  "homepage": "https://github.com/ahmedshabrawy/node-red-contrib-cequens#readme"
+  "homepage": "https://github.com/ahmedshabrawy/node-red-contrib-cequens#readme",
+  "dependencies": {
+    "request": "^2.83.0"
+  }
 }
