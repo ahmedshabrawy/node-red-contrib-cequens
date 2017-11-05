@@ -30,6 +30,7 @@ module.exports = function (RED) {
     function SmppOut(n) {
         RED.nodes.createNode(this, n);
         var connected = false;
+        var status = "disconnected"
         var pdu;
         var session;
         var node = this;
@@ -45,25 +46,95 @@ module.exports = function (RED) {
         }
 
         function enquireLink() {
-            if (connected) {
+            if (status == "connected") {
                 if (counter < maxCount) {
                     session.enquire_link();
                     counter++;
                 } else {
-                    node.error(` The SMPP connection is dead. counter:${counter}`)
-                    session.close(function(){connected = false;});
-                    
+                    node.error(` The SMPP connection is not responding counter:${counter}`)
+                    session.close(function () { status = "not responding"; });
+
 
                 }
             }
         }
 
         function connect() {
-            if (connected == false) {
-               
-                if ( typeof session !== 'undefined' ) session.removeAllListeners()
+            if (status == "disconnected") {
+
+                status = "connecting";
+                node.status({ fill: "yellow", shape: "ring", text: `${status}` });
+                //if (typeof session !== 'undefined') session.removeAllListeners()
                 node.log(`Connecting to ${n.host}:${n.port}`);
-                session = smpp.connect(n.host, n.port || 2010);
+                try {
+                    session = smpp.connect(n.host, n.port || 2010);
+                }
+                catch (error) {
+                    node.error('SMPP connection error: ' + error);
+                    session.close(function () { status == "disconnected"; });
+                    node.status({ fill: "red", shape: "ring", text: `${status} connection error: ${error}` });
+
+                }
+
+                session.on('error', function (error) {
+
+                    node.error('SMPP connection error: ' + error);
+                    session.close(function () {
+                        status = "disconnected";
+                        node.status({ fill: "red", shape: "ring", text: `${status} connection error: ${error}` });
+                    });
+
+                });
+
+                session.on('close', function () {
+                    node.error('SMPP connection is closed: ');
+                    status = "disconnected";
+                    node.status({ fill: "red", shape: "ring", text: `${status}` });
+
+                });
+
+                session.on('enquire_link', function (pdu) {
+                    session.send(pdu.response());
+                    //node.log('Responded an enquire link');
+                });
+                session.on('enquire_link_resp', function (pdu) {
+                    counter = 0;
+                    //node.log('Received a response to an enquire link');
+                });
+                session.on('deliver_sm', function (pdu) {
+
+
+                    var msg = {};
+                    msg.pdu = pdu;
+
+                    if (pdu.esm_class == 4) {
+                        msg.dlr = ParseDlr(pdu.short_message.message);
+                        node.send([, msg, ,]);
+                        var shortMessage = pdu.short_message;
+                        node.log(`deliver_sm DLR msgID:${msg.dlr.dlrId} dlrStat:${msg.dlr.dlrStat} dlrDiffSeconds:${msg.dlr.dlrDiffSeconds}`)
+                        session.send(pdu.response());
+                    }
+                    else {
+
+                        node.send([, , msg,]);
+                        node.log(`deliver_sm ESM_CLASS:${pdu.esm_class} msg:${pdu.short_message.message}`)
+                        var shortMessage = pdu.short_message;
+                        session.send(pdu.response());
+                    }
+                })
+                session.on('enquire_link', function (pdu) {
+                    session.send(pdu.response());
+                });
+                session.on('unbind', function (pdu) {
+                    session.send(pdu.response());
+
+                    node.info('SMPP remote server requested unbind')
+                    session.close();
+                    node.status({ fill: "yellow", shape: "ring", text: "unbind " + pdu.command_status });
+                    status = "disconnected";
+                });
+
+
                 session.bind_transceiver({
                     system_id: username,
                     password: password
@@ -71,79 +142,24 @@ module.exports = function (RED) {
                     pdu = pdu_;
                     if (pdu.command_status == 0) {
                         node.log(`bound successfuly`);
-                        //enquireLink();
-                        node.status({ fill: "green", shape: "dot", text: "connected" });
 
-                        session.on('enquire_link', function (pdu) {
-                            smpp.send(pdu.response());
-                            //node.log('Responded an enquire link');
-                        });
-                        
-                        session.on('enquire_link_resp', function (pdu) {
-                            counter = 0;
-                            //node.log('Received a response to an enquire link');
-                        });
-                        session.on('deliver_sm', function (pdu) {
-                            
-                            
-                            var msg = {};
-                            msg.pdu = pdu;
-                            
-                            if (pdu.esm_class == 4) {
-                                msg.dlr= ParseDlr(pdu.short_message.message);
-                                node.send([,msg,,]);
-                                var shortMessage = pdu.short_message;
-                                node.log(`deliver_sm DLR msgID:${msg.dlr.dlrId} dlrStat:${msg.dlr.dlrStat} dlrDiffSeconds:${msg.dlr.dlrDiffSeconds}`)
-                                session.send(pdu.response());
-                            }
-                            else {
-                                
-                                node.send([, , msg,]);
-                                node.log(`deliver_sm ESM_CLASS:${pdu.esm_class} msg:${pdu.short_message.message}`)
-                                var shortMessage = pdu.short_message;
-                                session.send(pdu.response());
-                            }
-                        })
-                        session.on('enquire_link', function (pdu) {
-                            session.send(pdu.response());
-                        });
-                        session.on('unbind', function (pdu) {
-                            session.send(pdu.response());
-
-                            node.error('SMPP remote server requested unbind')
-                            session.close(function(){connected = false;});
-                            node.status({ fill: "red", shape: "ring", text: "unbind " + pdu.command_status });
-                            
-                        });
-                        session.on('error', function (error) {
-
-                            node.error('SMPP connection error: ' + error);
-                             session.close(function(){connected = false;});
-                            node.status({ fill: "red", shape: "ring", text: "connection error: " + error });
-                            
-                            
-                        });
-                        session.on('close', function () {
-                            node.error('SMPP connection is closed: ');
-                            node.status({ fill: "red", shape: "ring", text: "connection closed" });
-                            connected = false;
-                        });
+                        status = "connected";
+                        node.status({ fill: "green", shape: "dot", text: `${status}` });
                         counter = 0;
-                        connected = true;
 
                     } else {
                         node.log(`bind error ${pdu.command_status}`);
                         node.status({ fill: "red", shape: "ring", text: "cmd status: " + pdu.command_status });
-                        connected = false;
+                        session.close();
+                        status = "disconnected";
                     }
                 });
             }
         }
 
-        function ParseDlr(msg)
-        {
+        function ParseDlr(msg) {
             var dlrMsgRegex = /id:(.*?)(sub:(.*?))?(dlvrd:(.*?))?(submit date:(.*?))?(done date:(.*?))?(stat:(.*?))?(err:(.*?))?(text:(.*?))?$/ig;
-            var dlr={};
+            var dlr = {};
             var dlrMatch = dlrMsgRegex.exec(msg);
             if (dlrMatch) {
                 //console.log(dlrMatch);
@@ -162,8 +178,8 @@ module.exports = function (RED) {
             return dlr;
         }
         connect();
-        setInterval(connect, 6000);
-        setInterval(enquireLink, 5000);
+        var reconnectTimer=setInterval(connect, 6000);
+        var enquireLinkTimer=setInterval(enquireLink, 5000);
         this.on('input', function (msg) {
             node.log(`submit_sm ${msg.source_addr || n.source_addr} ${msg.destination_addr} ${msg.data_coding || n.data_coding || 0x3}`)
             session.submit_sm({
@@ -191,10 +207,15 @@ module.exports = function (RED) {
 
         });
         this.on('close', function () {
+            node.log(`NODE CLOSE`);
+            clearInterval(reconnectTimer);
+            clearInterval(enquireLinkTimer);
+            session.close();
+            /*
             session.on('unbind', function (pdu) {
                 session.send(pdu.response());
-                 session.close(function(){connected = false;});
-            });
+                session.close(function () { connected = false; });
+            });*/
         })
 
 
